@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ========== Types de mouvement (modifiables dans Configuration) ========== -->
+    <record id="type_reception" model="adk.memo.type">
+        <field name="name">Réception fournisseur</field><field name="direction">in</field><field name="sequence">10</field>
+    </record>
+    <record id="type_retour_client" model="adk.memo.type">
+        <field name="name">Retour client</field><field name="direction">in</field><field name="sequence">20</field>
+    </record>
+    <record id="type_entree_diverse" model="adk.memo.type">
+        <field name="name">Entrée diverse</field><field name="direction">in</field><field name="sequence">90</field>
+    </record>
+    <record id="type_livraison" model="adk.memo.type">
+        <field name="name">Livraison client</field><field name="direction">out</field><field name="sequence">10</field>
+    </record>
+    <record id="type_consommation" model="adk.memo.type">
+        <field name="name">Consommation / usage interne</field><field name="direction">out</field><field name="sequence">20</field>
+    </record>
+    <record id="type_retour_fournisseur" model="adk.memo.type">
+        <field name="name">Retour fournisseur</field><field name="direction">out</field><field name="sequence">30</field>
+    </record>
+    <record id="type_casse" model="adk.memo.type">
+        <field name="name">Casse / perte</field><field name="direction">out</field><field name="sequence">40</field>
+    </record>
+    <record id="type_sortie_diverse" model="adk.memo.type">
+        <field name="name">Sortie diverse</field><field name="direction">out</field><field name="sequence">90</field>
+    </record>
+
+    <!-- ========== Statuts (modifiables dans Configuration) ========== -->
+    <record id="status_pending" model="adk.memo.status">
+        <field name="name">À régulariser</field><field name="kind">pending</field><field name="sequence">10</field>
+    </record>
+    <record id="status_progress" model="adk.memo.status">
+        <field name="name">En cours de régularisation</field><field name="kind">pending</field><field name="sequence">20</field>
+    </record>
+    <record id="status_done" model="adk.memo.status">
+        <field name="name">Régularisé</field><field name="kind">done</field><field name="sequence">30</field>
+    </record>
+</odoo>

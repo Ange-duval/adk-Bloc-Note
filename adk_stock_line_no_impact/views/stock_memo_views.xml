@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===================== ARTICLES : LISTE ===================== -->
+    <record id="view_adk_p_memo_list_v6" model="ir.ui.view">
+        <field name="name">adk.product.memo.list.v6</field>
+        <field name="model">adk.product.memo</field>
+        <field name="arch" type="xml">
+            <list create="true" edit="true" delete="false"
+                  decoration-danger="qty_available &lt; 0"
+                  decoration-warning="pending_count &gt; 0 and qty_available &gt;= 0">
+                <header>
+                    <button name="action_sync_articles" string="Synchroniser les Articles Odoo"
+                            type="object" class="btn-primary" display="always"/>
+                </header>
+                <field name="name"/>
+                <field name="uom_name" string="Unité" optional="show"/>
+                <field name="qty_in" string="ENTRÉES" sum="Total"/>
+                <field name="qty_out" string="SORTIES" sum="Total"/>
+                <field name="qty_available" string="STOCK BLOC-NOTE"/>
+                <field name="qty_pending" string="SOLDE À RÉGULARISER"/>
+                <field name="pending_count" string="Lignes en attente" optional="show"/>
+                <field name="real_qty" string="Stock réel Odoo (info)" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===================== ARTICLES : FORMULAIRE ===================== -->
+    <record id="view_adk_p_memo_form_v6" model="ir.ui.view">
+        <field name="name">adk.product.memo.form.v6</field>
+        <field name="model">adk.product.memo</field>
+        <field name="arch" type="xml">
+            <form string="Article Bloc-Note">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-exchange">
+                            <field name="move_count" widget="statinfo" string="Mouvements"/>
+                        </button>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Bloc-Note :</strong> cet article est une copie de travail.
+                        Les saisies n'ont aucun effet sur le stock réel d'Odoo.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Désignation de l'article"/></h1>
+                    </div>
+                    <group>
+                        <group string="Article Odoo d'origine">
+                            <field name="product_id"/>
+                            <field name="uom_name"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="État du Stock Bloc-Note">
+                            <field name="qty_in"/>
+                            <field name="qty_out"/>
+                            <field name="qty_available"/>
+                            <field name="qty_pending"/>
+                            <field name="real_qty"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_adk_p_memo_search_v6" model="ir.ui.view">
+        <field name="name">adk.product.memo.search.v6</field>
+        <field name="model">adk.product.memo</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter string="Avec lignes à régulariser" name="f_pending" domain="[('pending_count','>',0)]"/>
+                <filter string="Solde négatif" name="f_neg" domain="[('qty_available','&lt;',0)]"/>
+                <separator/>
+                <filter string="Archivés" name="f_arch" domain="[('active','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================== MOUVEMENTS : LISTE ===================== -->
+    <record id="view_adk_s_memo_list_v6" model="ir.ui.view">
+        <field name="name">adk.stock.memo.list.v6</field>
+        <field name="model">adk.stock.memo</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" decoration-muted="is_locked == True">
+                <header>
+                    <button name="action_regularize" type="object" string="Marquer comme régularisé"
+                            class="btn-primary"/>
+                    <button name="action_lock" type="object" string="Bloquer"/>
+                </header>
+                <field name="is_locked" column_invisible="1"/>
+                <field name="state" column_invisible="1"/>
+                <field name="name" optional="show"/>
+                <field name="date" readonly="is_locked"/>
+                <field name="adk_product_id" readonly="is_locked" options="{'no_open': True}"/>
+                <field name="type" readonly="is_locked"
+                       decoration-success="type == 'in'" decoration-danger="type == 'out'"/>
+                <field name="move_type_id" readonly="is_locked"
+                       options="{'no_create': True, 'no_open': True}"/>
+                <field name="qty" readonly="is_locked"/>
+                <field name="memo_partner_id" readonly="is_locked" options="{'no_open': True}"/>
+                <field name="origin_ref" readonly="is_locked"/>
+                <field name="description" readonly="is_locked" optional="hide"/>
+                <field name="user_id" readonly="1" optional="show"/>
+                <field name="status_id" options="{'no_create': True, 'no_open': True}"
+                       decoration-warning="state == 'pending'" decoration-success="state == 'done'"/>
+                <field name="regul_ref" optional="hide"/>
+                <button name="action_unlock" string="Débloquer" type="object" icon="fa-unlock"
+                        invisible="not is_locked"/>
+                <button name="action_lock" string="Bloquer" type="object" icon="fa-lock" class="text-success"
+                        invisible="is_locked"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===================== MOUVEMENTS : FORMULAIRE ===================== -->
+    <record id="view_adk_s_memo_form_v6" model="ir.ui.view">
+        <field name="name">adk.stock.memo.form.v6</field>
+        <field name="model">adk.stock.memo</field>
+        <field name="arch" type="xml">
+            <form string="Mouvement Bloc-Note">
+                <header>
+                    <button name="action_regularize" type="object" string="Marquer comme régularisé"
+                            class="btn-primary" invisible="state == 'done'"/>
+                    <button name="action_reset_pending" type="object" string="Remettre à régulariser"
+                            invisible="state == 'pending'" groups="stock.group_stock_manager"/>
+                    <button name="action_lock" type="object" string="Bloquer" invisible="is_locked"/>
+                    <button name="action_unlock" type="object" string="Débloquer" invisible="not is_locked"/>
+                    <field name="status_id" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <field name="is_locked" invisible="1"/>
+                    <field name="state" invisible="1"/>
+                    <div class="alert alert-info" role="alert">
+                        Note de terrain : ce mouvement <strong>n'impacte pas le stock réel</strong>.
+                        Une fois les documents officiels validés dans Odoo, passez-le au statut « Régularisé ».
+                    </div>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group string="Mouvement">
+                            <field name="date" readonly="is_locked"/>
+                            <field name="adk_product_id" readonly="is_locked"/>
+                            <field name="type" readonly="is_locked"/>
+                            <field name="move_type_id" readonly="is_locked"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="qty" readonly="is_locked"/>
+                        </group>
+                        <group string="Contexte">
+                            <field name="memo_partner_id" readonly="is_locked"/>
+                            <field name="origin_ref" readonly="is_locked"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1" readonly="is_locked"
+                               placeholder="Précisions utiles à la régularisation…"/>
+                    </group>
+                    <group string="Régularisation dans Odoo" invisible="state == 'pending'">
+                        <field name="regul_ref"/>
+                        <field name="regul_date"/>
+                        <field name="regul_user_id"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_adk_s_memo_search_v6" model="ir.ui.view">
+        <field name="name">adk.stock.memo.search.v6</field>
+        <field name="model">adk.stock.memo</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="adk_product_id"/>
+                <field name="name"/>
+                <field name="memo_partner_id"/>
+                <field name="move_type_id"/>
+                <field name="status_id"/>
+                <field name="origin_ref"/>
+                <field name="user_id"/>
+                <filter string="À régulariser" name="f_pending" domain="[('state','=','pending')]"/>
+                <filter string="Régularisé" name="f_done" domain="[('state','=','done')]"/>
+                <separator/>
+                <filter string="Entrées" name="f_in" domain="[('type','=','in')]"/>
+                <filter string="Sorties" name="f_out" domain="[('type','=','out')]"/>
+                <separator/>
+                <filter string="Date" name="f_date" date="date"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Article" name="g_prod" context="{'group_by':'adk_product_id'}"/>
+                    <filter string="Sens" name="g_type" context="{'group_by':'type'}"/>
+                    <filter string="Type de mouvement" name="g_mtype" context="{'group_by':'move_type_id'}"/>
+                    <filter string="Tiers" name="g_partner" context="{'group_by':'memo_partner_id'}"/>
+                    <filter string="Statut" name="g_status" context="{'group_by':'status_id'}"/>
+                    <filter string="Magasinier" name="g_user" context="{'group_by':'user_id'}"/>
+                    <filter string="Mois" name="g_month" context="{'group_by':'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_adk_s_memo_pivot_v6" model="ir.ui.view">
+        <field name="name">adk.stock.memo.pivot.v6</field>
+        <field name="model">adk.stock.memo</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse des mouvements">
+                <field name="adk_product_id" type="row"/>
+                <field name="type" type="col"/>
+                <field name="qty" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_adk_s_memo_graph_v6" model="ir.ui.view">
+        <field name="name">adk.stock.memo.graph.v6</field>
+        <field name="model">adk.stock.memo</field>
+        <field name="arch" type="xml">
+            <graph string="Mouvements par mois" type="bar">
+                <field name="date" interval="month"/>
+                <field name="type"/>
+                <field name="qty" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ===================== TIERS ===================== -->
+    <record id="view_adk_partner_list_v6" model="ir.ui.view">
+        <field name="name">adk.partner.memo.list.v6</field>
+        <field name="model">adk.partner.memo</field>
+        <field name="arch" type="xml">
+            <list>
+                <header>
+                    <button name="action_sync_partners" string="Synchroniser les Tiers Odoo"
+                            type="object" class="btn-primary" display="always"/>
+                </header>
+                <field name="name"/>
+                <field name="partner_type"/>
+                <field name="phone" optional="show"/>
+                <field name="move_count" string="Mouvements"/>
+                <field name="pending_count" string="À régulariser"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_adk_partner_form_v6" model="ir.ui.view">
+        <field name="name">adk.partner.memo.form.v6</field>
+        <field name="model">adk.partner.memo</field>
+        <field name="arch" type="xml">
+            <form string="Tiers Bloc-Note">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_moves" type="object" class="oe_stat_button" icon="fa-exchange">
+                            <field name="move_count" widget="statinfo" string="Mouvements"/>
+                        </button>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        Ce tiers est une copie de travail : vos contacts Odoo ne sont jamais modifiés.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Nom du client ou du fournisseur"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_type"/>
+                            <field name="phone"/>
+                            <field name="note"/>
+                        </group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="pending_count"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_adk_partner_search_v6" model="ir.ui.view">
+        <field name="name">adk.partner.memo.search.v6</field>
+        <field name="model">adk.partner.memo</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter string="Fournisseurs" name="f_supplier" domain="[('partner_type','in',('supplier','both'))]"/>
+                <filter string="Clients" name="f_customer" domain="[('partner_type','in',('customer','both'))]"/>
+                <separator/>
+                <filter string="Archivés" name="f_arch" domain="[('active','=',False)]"/>
+                <group expand="0" string="Grouper par">
+                    <filter string="Nature" name="g_ptype" context="{'group_by':'partner_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================== CONFIGURATION : TYPES ===================== -->
+    <record id="view_adk_type_list_v6" model="ir.ui.view">
+        <field name="name">adk.memo.type.list.v6</field>
+        <field name="model">adk.memo.type</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="direction"/>
+                <field name="description" optional="show"/>
+                <field name="move_count" string="Utilisations" optional="show"/>
+                <field name="active" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_adk_type_search_v6" model="ir.ui.view">
+        <field name="name">adk.memo.type.search.v6</field>
+        <field name="model">adk.memo.type</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter string="Entrées" name="f_in" domain="[('direction','=','in')]"/>
+                <filter string="Sorties" name="f_out" domain="[('direction','=','out')]"/>
+                <separator/>
+                <filter string="Archivés" name="f_arch" domain="[('active','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ===================== CONFIGURATION : STATUTS ===================== -->
+    <record id="view_adk_status_list_v6" model="ir.ui.view">
+        <field name="name">adk.memo.status.list.v6</field>
+        <field name="model">adk.memo.status</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="kind"/>
+                <field name="move_count" string="Utilisations" optional="show"/>
+                <field name="active" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ===================== ASSISTANT RAPPORT ===================== -->
+    <record id="view_adk_rep_wiz_form_v6" model="ir.ui.view">
+        <field name="name">adk.stock.report.wizard.form.v6</field>
+        <field name="model">adk.stock.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rapport Bloc-Note">
+                <group>
+                    <group string="Période">
+                        <field name="date_start"/>
+                        <field name="date_end"/>
+                    </group>
+                    <group string="Contenu">
+                        <field name="state_filter"/>
+                        <field name="type_filter"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_print_pdf" string="Générer PDF" type="object" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ===================== ACTIONS ===================== -->
+    <record id="act_adk_p_v6" model="ir.actions.act_window">
+        <field name="name">État des Stocks</field>
+        <field name="res_model">adk.product.memo</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_adk_p_memo_list_v6"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun article dans le Bloc-Note</p>
+            <p>Cliquez sur « Synchroniser les Articles Odoo » pour copier vos articles.
+               Le stock réel n'est jamais modifié.</p>
+        </field>
+    </record>
+
+    <record id="act_adk_s_v6" model="ir.actions.act_window">
+        <field name="name">Saisie Mouvements</field>
+        <field name="res_model">adk.stock.memo</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="view_id" ref="view_adk_s_memo_list_v6"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun mouvement enregistré</p>
+            <p>Notez ici chaque entrée ou sortie au moment où elle se produit, même si les
+               documents officiels ne sont pas encore validés.</p>
+        </field>
+    </record>
+
+    <record id="act_adk_todo_v6" model="ir.actions.act_window">
+        <field name="name">À régulariser</field>
+        <field name="res_model">adk.stock.memo</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_adk_s_memo_list_v6"/>
+        <field name="domain">[('state','=','pending')]</field>
+        <field name="context">{'search_default_f_pending': 1}</field>
+    </record>
+
+    <record id="act_adk_partner_v6" model="ir.actions.act_window">
+        <field name="name">Tiers</field>
+        <field name="res_model">adk.partner.memo</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_adk_partner_list_v6"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun tiers dans le Bloc-Note</p>
+            <p>Cliquez sur « Synchroniser les Tiers Odoo » pour copier vos clients et fournisseurs,
+               ou créez-les directement depuis la saisie d'un mouvement.</p>
+        </field>
+    </record>
+
+    <record id="act_adk_type_v6" model="ir.actions.act_window">
+        <field name="name">Types de mouvement</field>
+        <field name="res_model">adk.memo.type</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_adk_type_list_v6"/>
+    </record>
+
+    <record id="act_adk_status_v6" model="ir.actions.act_window">
+        <field name="name">Statuts</field>
+        <field name="res_model">adk.memo.status</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_adk_status_list_v6"/>
+    </record>
+
+    <record id="act_adk_w_v6" model="ir.actions.act_window">
+        <field name="name">Rapport PDF</field>
+        <field name="res_model">adk.stock.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_adk_rep_wiz_form_v6"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ===================== MENUS ===================== -->
+    <menuitem id="m_adk_r_v6" name="ADK Bloc-Note"
+              web_icon="adk_stock_line_no_impact,static/description/icon.png" sequence="1"/>
+    <menuitem id="m_adk_s_v6" name="Saisie Mouvements" parent="m_adk_r_v6" action="act_adk_s_v6" sequence="10"/>
+    <menuitem id="m_adk_todo_v6" name="À régulariser" parent="m_adk_r_v6" action="act_adk_todo_v6" sequence="15"/>
+    <menuitem id="m_adk_p_v6" name="État des Stocks" parent="m_adk_r_v6" action="act_adk_p_v6" sequence="20"/>
+    <menuitem id="m_adk_partner_v6" name="Tiers" parent="m_adk_r_v6" action="act_adk_partner_v6" sequence="25"/>
+    <menuitem id="m_adk_w_v6" name="Rapport PDF" parent="m_adk_r_v6" action="act_adk_w_v6" sequence="30"/>
+    <menuitem id="m_adk_cfg_v6" name="Configuration" parent="m_adk_r_v6" sequence="90"
+              groups="stock.group_stock_manager"/>
+    <menuitem id="m_adk_cfg_type_v6" name="Types de mouvement" parent="m_adk_cfg_v6"
+              action="act_adk_type_v6" sequence="10"/>
+    <menuitem id="m_adk_cfg_status_v6" name="Statuts" parent="m_adk_cfg_v6"
+              action="act_adk_status_v6" sequence="20"/>
+</odoo>

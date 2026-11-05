@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_adk_product_memo_user,adk.product.memo.user,model_adk_product_memo,stock.group_stock_user,1,1,1,0
+access_adk_product_memo_manager,adk.product.memo.manager,model_adk_product_memo,stock.group_stock_manager,1,1,1,1
+access_adk_stock_memo_user,adk.stock.memo.user,model_adk_stock_memo,stock.group_stock_user,1,1,1,0
+access_adk_stock_memo_manager,adk.stock.memo.manager,model_adk_stock_memo,stock.group_stock_manager,1,1,1,1
+access_adk_partner_memo_user,adk.partner.memo.user,model_adk_partner_memo,stock.group_stock_user,1,1,1,0
+access_adk_partner_memo_manager,adk.partner.memo.manager,model_adk_partner_memo,stock.group_stock_manager,1,1,1,1
+access_adk_memo_type_user,adk.memo.type.user,model_adk_memo_type,stock.group_stock_user,1,0,0,0
+access_adk_memo_type_manager,adk.memo.type.manager,model_adk_memo_type,stock.group_stock_manager,1,1,1,1
+access_adk_memo_status_user,adk.memo.status.user,model_adk_memo_status,stock.group_stock_user,1,0,0,0
+access_adk_memo_status_manager,adk.memo.status.manager,model_adk_memo_status,stock.group_stock_manager,1,1,1,1
+access_adk_stock_report_wizard,adk.stock.report.wizard,model_adk_stock_report_wizard,stock.group_stock_user,1,1,1,1
